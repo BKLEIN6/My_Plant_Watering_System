@@ -1,35 +1,39 @@
-# Midterm2_Plant_Watering_System
+# Plant Watering System - Midterm 2
 
-A Particle project named Midterm2_Plant_Watering_System
+## Overview
 
-## Welcome to your project!
+The purpose of this project was to send connect an microcontroller to adafuit.io, send data to a dashboard, and be able to receive a signal from the dashboard to water a plant.
 
-Every new Particle project is composed of 3 important elements that you'll see have been created in your project directory for Midterm2_Plant_Watering_System.
+## Details
 
-#### ```/src``` folder:  
-This is the source folder that contains the firmware files for your project. It should *not* be renamed. 
-Anything that is in this folder when you compile your project will be sent to our compile service and compiled into a firmware binary for the Particle device that you have targeted.
+The device will use the following components:
+**Particle Argon (qty 1)
+**ElectroPeak 64x128 OLED screen (qty 1)
+**resistors (one(1) 220ohm and one(1) 2.2.K ohm)
+**Transistor model 2N3906 (qty 1)
+**SONGLE RELAY SRD-03VDC-SL-C(qty 1)
+**Grove - Air Quality Sensor v1.3 (qty 1)
+**Grove - Dust Sensor v1.0 (qty 1)
+**BME/BMP280 (qty 1)
+**soil Moisture Sensor Capacitor Module for Arduino Corrosion Resistant 3 B2t3 (qty 1)
+**submersible water pump(qty 1)
 
-If your application contains multiple files, they should all be included in the `src` folder. If your firmware depends on Particle libraries, those dependencies are specified in the `project.properties` file referenced below.
+The project will be completed in the following steps:
 
-#### ```.ino``` file:
-This file is the firmware that will run as the primary application on your Particle device. It contains a `setup()` and `loop()` function, and can be written in Wiring or C/C++. For more information about using the Particle firmware API to create firmware for your Particle device, refer to the [Firmware Reference](https://docs.particle.io/reference/firmware/) section of the Particle documentation.
+1. Notebook - rough documentation of idea and flow chart
+1. Fritzing - A diagram 
+1. Breadboard 
+1. Coding 
+___  
 
-#### ```project.properties``` file:  
-This is the file that specifies the name and version number of the libraries that your project depends on. Dependencies are added automatically to your `project.properties` file when you add a library to a project using the `particle library add` command in the CLI or add a library in the Desktop IDE.
+## Summary
 
-## Adding additional files to your project
+Our class was given this project to do as for our second "midterm". The requirements that were given were to make something that can:
+1) Collect plant soil data (capacitance levels of soil). 
+2) Collect room environmental conditions (Air Quality, Dust levels, Temperature, Humidity, and Pressure).
+3) Send collected data to a Dashboard on Adafruit.IO.
+4) Receive a signal from Dashboard to water plant for X seconds per press.
+5) Display all data on an OLED screen on system.
 
-#### Projects with multiple sources
-If you would like add additional files to your application, they should be added to the `/src` folder. All files in the `/src` folder will be sent to the Particle Cloud to produce a compiled binary.
 
-#### Projects with external libraries
-If your project includes a library that has not been registered in the Particle libraries system, you should create a new folder named `/lib/<libraryname>/src` under `/<project dir>` and add the `.h`, `.cpp` & `library.properties` files for your library there. Read the [Firmware Libraries guide](https://docs.particle.io/guide/tools-and-features/libraries/) for more details on how to develop libraries. Note that all contents of the `/lib` folder and subfolders will also be sent to the Cloud for compilation.
-
-## Compiling your project
-
-When you're ready to compile your project, make sure you have the correct Particle device target selected and run `particle compile <platform>` in the CLI or click the Compile button in the Desktop IDE. The following files in your project folder will be sent to the compile service:
-
-- Everything in the `/src` folder, including your `.ino` application file
-- The `project.properties` file for your project
-- Any libraries stored under `lib/<libraryname>/src`
+[Here is a link to my Hackers.io account](https://www.hackster.io/benjaminwklein/projects)
