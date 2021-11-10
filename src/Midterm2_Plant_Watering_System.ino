@@ -21,20 +21,17 @@
 const int MOIST = A0;
 const int LED = D7;
 const int PUMP = D2;
+const int DUST = D3;
 
 int thirsty, hum, temp, waterMe;
 
-unsigned long last, lastTime, startPumpTime, autoLastTime;
+unsigned long last, lastTime, startPumpTime, autoLastTime, displayTime, bmeTime, readTime, dustTime;
 
 float press;
 
 bool pumpOn;
 
 //SEEED GROVE DUST
-const int DUST = D3;
-unsigned long duration, starttime;
-unsigned long sampletime_ms = 30000;//sampe 30s ;
-unsigned long lowpulseoccupancy = 0;
 float ratio = 0;
 float concentration = 0;
 
@@ -69,6 +66,9 @@ void setup() {
 Serial.begin(9600);
 waitFor(Serial.isConnected, 15000); //wait for Serial Monitor to startup
 
+//Moisture Seneor Read Timer Setup
+readTime = millis();
+
 //BME280 setup
 unsigned status;
   status = bme.begin();
@@ -82,18 +82,20 @@ unsigned status;
     Serial.print("        ID of 0x61 represents a BME 680.\n");
     while (1);
   }
+bmeTime = millis();
 
 pinMode(MOIST, INPUT);
 pinMode(LED, OUTPUT);
 pinMode(PUMP, OUTPUT);
 
 //DUST SENSOR SETUP
-starttime = millis();
+
+dustTime = millis();
 pinMode(DUST, INPUT);
 
 //AQS 1.3 setup
 Serial.println("Waiting sensor to init...");
-delay(20000);
+delay(10000);
 if (sensor.init()) {
  Serial.println("Sensor ready.");
 }
@@ -107,6 +109,7 @@ display.display(); // show splashscreen
 delay(2000);
 display.clearDisplay();// clears splashscreen 
 display.display();
+displayTime = millis();
 
 //Connect to WiFi without going to Particle Cloud
 WiFi.connect();
@@ -121,34 +124,48 @@ WiFi.connect();
 void loop() {
 
 MQTT_connect();
-BME280Values();
 listen();
-sendData();
+BME280Values();
 OLEDdisplay();
-dustSensor();
 aqsLoop();
 readMoist();
+thirstyPlant();
 stopPump();
+dustSensor();
+sendData();
 }
 
 void readMoist(){
-  thirsty = analogRead(MOIST);
-  // Serial.printf("Sensor reading %i\n", thirsty);
-  //change thirsty to about 2500 when you want to run automode
-  if(millis()-autoLastTime > 180000 && thirsty >= 5000) {
+// Serial.printf("readMoist %i\n", millis());
+  if (millis()-readTime >5000){
+    thirsty = analogRead(MOIST);
+    // Serial.printf("Sensor reading %i\n", thirsty);
+    readTime = millis();
+  }
+}
+
+void thirstyPlant(){
+// Serial.printf("thirstyPlant %i\n", millis());
+//change thirsty to about 2500 when you want to run automode
+  if(millis()-autoLastTime > 3600000 && thirsty >= 2500) {
   runPump();
   autoLastTime = millis();
   }
 }
 
 void BME280Values(){
-  temp = bme.readTemperature() * 9 / 5 + 32;
-  press = bme.readPressure() / 100;
-  hum = bme.readHumidity();
-  // Serial.printf(" Temp is %.2f fahrenheit\n Pressure is %.2fhPa\n Humidity is %i percent\n", temp, press, hum);
+// Serial.printf("BME280Values %i\n", millis());
+  if(millis()-bmeTime > 5000){ 
+   temp = bme.readTemperature() * 9 / 5 + 32;
+   press = bme.readPressure() / 100;
+   hum = bme.readHumidity();
+   bmeTime = millis();
+   // Serial.printf(" Temp is %.2f fahrenheit\n Pressure is %.2fhPa\n Humidity is %i percent\n", temp, press, hum);
+  }
 }
 
 void MQTT_connect() {
+// Serial.printf("MQTT_Connect %i\n", millis());
   int8_t ret;
  
   // Stop if already connected.
@@ -167,8 +184,10 @@ void MQTT_connect() {
 }
 
 void listen(){
+// Serial.printf("listen %i\n", millis());
 Adafruit_MQTT_Subscribe *subscription;
-  while ((subscription = mqtt.readSubscription(1000))) {
+//readSubscription was set to 1000 and was causing a mandatory 1second delay, tested 200 millis ok
+  while ((subscription = mqtt.readSubscription(100))) {
     if (subscription == &waterObj1) {
       waterMe = atof((char *)waterObj1.lastread);
       if (waterMe == true){
@@ -184,6 +203,7 @@ Adafruit_MQTT_Subscribe *subscription;
 }
 
 void sendData(){ // Validate connected to MQTT Broker
+// Serial.printf("sendData %i\n", millis());
   // Ping MQTT Broker every 2 minutes to keep connection alive
   if ((millis()-last)>120000) {
       Serial.printf("Pinging MQTT \n");
@@ -207,40 +227,57 @@ void sendData(){ // Validate connected to MQTT Broker
 }
 
 void runPump(){
+  // Serial.printf("runPump %i\n", millis());
+  pumpOn = true;
   digitalWrite(PUMP, HIGH);
   startPumpTime = millis();
-  Serial.printf("start pump time %i\n", startPumpTime);
+  // Serial.printf("start pump time %i\n", startPumpTime);
 }
 
 void stopPump(){
   if(millis() - startPumpTime >500){
+  pumpOn = false;
   digitalWrite(PUMP, LOW);
-  Serial.printf("stop pump time %i\n", millis());
+  // Serial.printf("stop pump time %i\n", millis());
   }
 }
 
 void dustSensor(){
-  duration = pulseIn(DUST, LOW);
-  lowpulseoccupancy = lowpulseoccupancy+duration;
-    if ((millis()-starttime) > sampletime_ms){//if the sampel time == 30s
-     ratio = lowpulseoccupancy/(sampletime_ms*10.0);  // Integer percentage 0=>100
-     concentration = 1.1*pow(ratio,3)-3.8*pow(ratio,2)+520*ratio+0.62; // using spec sheet curve
-    //  Serial.printf("lowpulseoccupancy %i, ratio %0.2f, concentration %0.2f \n", lowpulseoccupancy, ratio, concentration);
-     lowpulseoccupancy = 0;
-     starttime = millis();
-    }
+
+unsigned long duration, starttime;
+unsigned long sampletime_ms = 30000;//sampe 30s ;
+unsigned long lowpulseoccupancy = 0;
+
+  if (!pumpOn && millis()-dustTime > 3600000){
+    // Serial.printf("dustSensor %i\n", millis());
+    starttime = millis();
+    while(millis()-starttime < sampletime_ms){
+      duration = pulseIn(DUST, LOW);
+      lowpulseoccupancy = lowpulseoccupancy+duration;
+      ratio = lowpulseoccupancy/(sampletime_ms*10.0);  // Integer percentage 0=>100
+      concentration = 1.1*pow(ratio,3)-3.8*pow(ratio,2)+520*ratio+0.62; // using spec sheet curve
+      //  Serial.printf("lowpulseoccupancy %i, ratio %0.2f, concentration %0.2f \n", lowpulseoccupancy, ratio, concentration);
+      lowpulseoccupancy = 0;
+      }
+    dustTime=millis();
+  }
 }
 
 void aqsLoop(){
+// Serial.printf("aqsLoop %i\n", millis());
   int quality = sensor.slope();
-  // Serial.printf("AQS: %i\n", sensor.getValue());
+// Serial.printf("AQS: %i\n", sensor.getValue());
 }
 
 void OLEDdisplay(){
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.printf(" thirst-meter %i\n temp %i %cF \n pressure %0.2f\n humidity %i %c\n Air QUality %i\n Dust %0.2f\n", thirsty, temp, 248,  press, hum, 37, sensor.getValue(), concentration);
-  display.display();
+// Serial.printf("OLED %i\n", millis());
+  if(millis()-displayTime > 5000){ 
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.printf(" thirst-meter %i\n temp %i %cF \n pressure %0.2fhPa\n humidity %i %c\n Air QUality %i\n Dust %0.2f\n", thirsty, temp, 248,  press, hum, 37, sensor.getValue(), concentration);
+    display.display();
+    displayTime = millis();
+  }
 }
