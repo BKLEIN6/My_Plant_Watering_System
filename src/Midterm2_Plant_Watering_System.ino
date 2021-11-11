@@ -57,6 +57,8 @@ Adafruit_MQTT_Publish tempObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/fee
 Adafruit_MQTT_Publish pressObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/pressure");
 Adafruit_MQTT_Publish humObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/humidity");
 Adafruit_MQTT_Publish thirstyObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/moisture-level");
+Adafruit_MQTT_Publish dustyObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/dust"); 
+Adafruit_MQTT_Publish aqObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/air-quality");
 Adafruit_MQTT_Subscribe waterObj1 = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/water");
 
 SYSTEM_MODE(SEMI_AUTOMATIC);
@@ -220,6 +222,8 @@ void sendData(){ // Validate connected to MQTT Broker
       pressObj1.publish(press);
       humObj1.publish(hum);
       thirstyObj1.publish(thirsty);
+      dustyObj1.publish(concentration);
+      aqObj1.publish(sensor.getValue());
       // Serial.printf(" Publishing\n temp %i\n pressure %0.2f\n humidity %i\n dryness %i\n",temp, press, hum, thirsty); 
       } 
     lastTime = millis();
