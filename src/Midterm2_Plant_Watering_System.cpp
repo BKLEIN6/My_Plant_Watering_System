@@ -59,15 +59,12 @@ float concentration = 0;
 AirQualitySensor sensor(A1);
 int current_quality =-1;
 
-
 #define OLED_RESET D4
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 Adafruit_BME280 bme; 
 
 Adafruit_SSD1306 display(OLED_RESET);\
-
-
 
 TCPClient TheClient; 
 
@@ -82,7 +79,6 @@ Adafruit_MQTT_Publish aqObj1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds
 Adafruit_MQTT_Subscribe waterObj1 = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/water");
 
 SYSTEM_MODE(SEMI_AUTOMATIC);
-
 
 void setup() {
 Serial.begin(9600);
@@ -145,20 +141,20 @@ WiFi.connect();
 
 void loop() {
 
-MQTT_connect();
-listen();
-BME280Values();
-OLEDdisplay();
-aqsLoop();
-readMoist();
-thirstyPlant();
-stopPump();
-dustSensor();
-sendData();
+ MQTT_connect();
+ listen();
+ BME280Values();
+ OLEDdisplay();
+ aqsLoop();
+ readMoist();
+ thirstyPlant();
+ stopPump();
+ dustSensor();
+ sendData();
 }
 
 void readMoist(){
-// Serial.printf("readMoist %i\n", millis());
+Serial.printf("readMoist %i\n", millis());
   if (millis()-readTime >5000){
     thirsty = analogRead(MOIST);
     // Serial.printf("Sensor reading %i\n", thirsty);
@@ -167,8 +163,8 @@ void readMoist(){
 }
 
 void thirstyPlant(){
-// Serial.printf("thirstyPlant %i\n", millis());
-//change thirsty to about 2500 when you want to run automode
+Serial.printf("thirstyPlant %i\n", millis());
+//change thirsty to about 2500 when you want to run automode, current time delay is 1hr or 3600000 millis
   if(millis()-autoLastTime > 3600000 && thirsty >= 2500) {
   runPump();
   autoLastTime = millis();
@@ -176,7 +172,7 @@ void thirstyPlant(){
 }
 
 void BME280Values(){
-// Serial.printf("BME280Values %i\n", millis());
+Serial.printf("BME280Values %i\n", millis());
   if(millis()-bmeTime > 5000){ 
    temp = bme.readTemperature() * 9 / 5 + 32;
    press = bme.readPressure() / 100;
@@ -206,7 +202,7 @@ void MQTT_connect() {
 }
 
 void listen(){
-// Serial.printf("listen %i\n", millis());
+Serial.printf("listen %i\n", millis());
 Adafruit_MQTT_Subscribe *subscription;
 //readSubscription was set to 1000 and was causing a mandatory 1second delay, tested 200 millis ok
   while ((subscription = mqtt.readSubscription(100))) {
@@ -225,7 +221,7 @@ Adafruit_MQTT_Subscribe *subscription;
 }
 
 void sendData(){ // Validate connected to MQTT Broker
-// Serial.printf("sendData %i\n", millis());
+Serial.printf("sendData %i\n", millis());
   // Ping MQTT Broker every 2 minutes to keep connection alive
   if ((millis()-last)>120000) {
       Serial.printf("Pinging MQTT \n");
@@ -251,7 +247,7 @@ void sendData(){ // Validate connected to MQTT Broker
 }
 
 void runPump(){
-  // Serial.printf("runPump %i\n", millis());
+  Serial.printf("runPump %i\n", millis());
   pumpOn = true;
   digitalWrite(PUMP, HIGH);
   startPumpTime = millis();
@@ -271,9 +267,9 @@ void dustSensor(){
 unsigned long duration, starttime;
 unsigned long sampletime_ms = 30000;//sampe 30s ;
 unsigned long lowpulseoccupancy = 0;
-
+  //current time delay to test dust is 1Hr or 3600000 millis
   if (!pumpOn && millis()-dustTime > 3600000){
-    // Serial.printf("dustSensor %i\n", millis());
+    Serial.printf("dustSensor %i\n", millis());
     starttime = millis();
     while(millis()-starttime < sampletime_ms){
       duration = pulseIn(DUST, LOW);
@@ -288,13 +284,13 @@ unsigned long lowpulseoccupancy = 0;
 }
 
 void aqsLoop(){
-// Serial.printf("aqsLoop %i\n", millis());
+Serial.printf("aqsLoop %i\n", millis());
   int quality = sensor.slope();
 // Serial.printf("AQS: %i\n", sensor.getValue());
 }
 
 void OLEDdisplay(){
-// Serial.printf("OLED %i\n", millis());
+Serial.printf("OLED %i\n", millis());
   if(millis()-displayTime > 5000){ 
     display.clearDisplay();
     display.setTextSize(1);
